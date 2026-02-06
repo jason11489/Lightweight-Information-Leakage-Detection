@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>정보 유출 탐지기</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🔒 정보 유출 탐지기</h1>
+      </header>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="input">직접 입력</button>
+        <button class="tab-btn" data-tab="page">페이지 분석</button>
+      </div>
+
+      <!-- 직접 입력 탭 -->
+      <div id="input-tab" class="tab-content active">
+        <textarea
+          id="input-text"
+          placeholder="분석할 텍스트를 입력하세요..."
+        ></textarea>
+        <button id="analyze-btn" class="primary-btn">🔍 분석하기</button>
+      </div>
+
+      <!-- 페이지 분석 탭 -->
+      <div id="page-tab" class="tab-content">
+        <p class="info-text">현재 페이지의 텍스트를 분석합니다.</p>
+        <button id="scan-page-btn" class="primary-btn">📄 페이지 스캔</button>
+        <button id="scan-selection-btn" class="secondary-btn">
+          ✂️ 선택 영역만
+        </button>
+      </div>
+
+      <!-- 결과 영역 -->
+      <div id="result-area" class="hidden">
+        <div id="risk-badge" class="risk-badge"></div>
+
+        <div class="result-section">
+          <h3>📊 위험도 점수</h3>
+          <div class="score-bar">
+            <div id="score-fill" class="score-fill"></div>
+          </div>
+          <span id="score-text" class="score-text">0/100</span>
+        </div>
+
+        <div id="patterns-section" class="result-section hidden">
+          <h3>🎯 탐지된 패턴</h3>
+          <ul id="patterns-list"></ul>
+        </div>
+
+        <div id="keywords-section" class="result-section hidden">
+          <h3>🏷️ 민감 키워드</h3>
+          <ul id="keywords-list"></ul>
+        </div>
+
+        <div class="result-section">
+          <h3>📝 요약</h3>
+          <p id="summary-text"></p>
+        </div>
+      </div>
+
+      <footer>
+        <small>v1.0 | 로컬에서만 분석됩니다</small>
+      </footer>
+    </div>
+
+    <script src="detector.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
