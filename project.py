@@ -19,7 +19,8 @@ class RuleBasedDetector:
     
     def __init__(self):
         self.patterns = {
-            '주민등록번호': r'\d{6}[-\s]?\d{7}',
+            # '주민등록번호': r'\d{6}[-\s]?\d{7}',
+            '주민등록번호' : r'\d{2}([0]\d|[1][0-2])([0][1-9]|[1-2]\d|[3][0-1])[-]*[1-4]\d{6}',
             '전화번호': r'(01[016789][-\s]?\d{3,4}[-\s]?\d{4})',
             '이메일': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
             '신용카드': r'\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}',
@@ -379,7 +380,7 @@ if __name__ == "__main__":
     print(f"학습 데이터: {len(X_train)}개, 테스트 데이터: {len(X_test)}개\n")
     
     # 모델별 평가
-    model_types = ['logistic', 'naive_bayes']
+    model_types = ['rule_based', 'logistic', 'naive_bayes']
     results = {}
     
     for model_type in model_types:
@@ -387,16 +388,23 @@ if __name__ == "__main__":
         print(f"📌 {model_type.upper()}")
         print('='*50)
         
-        # 학습
-        clf = TfidfClassifier(model_type=model_type)
-        clf.vectorizer.fit(X_train)
-        X_train_vec = clf.vectorizer.transform(X_train)
-        X_test_vec = clf.vectorizer.transform(X_test)
-        clf.model.fit(X_train_vec, y_train)
-        clf.is_trained = True
-        
-        # 예측
-        y_pred = clf.model.predict(X_test_vec)
+        if model_type == 'rule_based':
+            # 규칙 기반 탐지기 평가
+            detector = RuleBasedDetector()
+            y_pred = [int(detector.analyze(text)['is_leak']) for text in X_test]
+        else:
+            # TF-IDF 기반 모델 평가
+            clf = TfidfClassifier(model_type=model_type)
+            clf.vectorizer.fit(X_train)
+            print(f"\n🔍 Vectorizer 구성: {clf.vectorizer.get_params()}")
+
+            X_train_vec = clf.vectorizer.transform(X_train)
+            X_test_vec = clf.vectorizer.transform(X_test)
+            clf.model.fit(X_train_vec, y_train)
+            clf.is_trained = True
+            
+            # 예측
+            y_pred = clf.model.predict(X_test_vec)
         
         # 메트릭 계산
         acc = accuracy_score(y_test, y_pred)
@@ -440,13 +448,41 @@ if __name__ == "__main__":
     best_model_type = max(results, key=lambda x: results[x]['f1'])
     print(f"최적 모델: {best_model_type} (F1: {results[best_model_type]['f1']:.4f})")
     
-    # 전체 데이터로 재학습
-    best_clf = TfidfClassifier(model_type=best_model_type)
-    best_clf.train(texts, labels)
+    # 전체 데이터로 재학습 (규칙 기반은 학습 불필요)
+    if best_model_type == 'rule_based':
+        best_clf = None
+    else:
+        best_clf = TfidfClassifier(model_type=best_model_type)
+        best_clf.train(texts, labels)
     
     # HybridDetector 생성 및 저장
     hybrid = HybridDetector(ml_model=best_clf)
     hybrid.save('hybrid_detector.pkl')
+    
+    # ============== HybridDetector 평가 ==============
+    print("\n" + "=" * 60)
+    print("📊 HybridDetector 평가")
+    print("=" * 60)
+    
+    # X_test에 대한 예측
+    y_pred_hybrid = [int(hybrid.analyze(text)['final']['is_leak']) for text in X_test]
+    
+    # 메트릭 계산
+    acc_hybrid = accuracy_score(y_test, y_pred_hybrid)
+    f1_hybrid = f1_score(y_test, y_pred_hybrid)
+    precision_hybrid = precision_score(y_test, y_pred_hybrid)
+    recall_hybrid = recall_score(y_test, y_pred_hybrid)
+    
+    # Confusion Matrix
+    cm_hybrid = confusion_matrix(y_test, y_pred_hybrid)
+    print(f"\n🔹 Confusion Matrix:")
+    print(f"              예측:정상  예측:유출")
+    print(f"  실제:정상      {cm_hybrid[0][0]:4d}      {cm_hybrid[0][1]:4d}")
+    print(f"  실제:유출      {cm_hybrid[1][0]:4d}      {cm_hybrid[1][1]:4d}")
+    
+    # Classification Report
+    print(f"\n🔹 Classification Report:")
+    print(classification_report(y_test, y_pred_hybrid, target_names=['정상', '유출위험']))
     
     # 저장된 모델 로드 테스트
     print("\n" + "=" * 60)

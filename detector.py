@@ -1,5 +1,5 @@
 from project import HybridDetector  # Replace with the actual module name
-import ollama
+# import ollama
 
 loaded_hybrid = HybridDetector.load('hybrid_detector.pkl')
 
@@ -38,4 +38,4 @@ for text in test_texts:
     # ollama_status = "🚨 유출위험" if "유출위험" in ollama_result else "✅ 정상"
     
     # print(f"Hybrid: {hybrid_status} ({hybrid_conf:.1%}) | Ollama: {ollama_status} | Text: {text[:40]}...")
-    print(f"Hybrid: {hybrid_status} ({hybrid_conf:.1%}) |  Text: {text[:40]}...")
+    print(f"Hybrid: {hybrid_status}|  Text: {text[:40]}...")

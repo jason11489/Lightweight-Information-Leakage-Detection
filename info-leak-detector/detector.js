@@ -58,9 +58,17 @@ class InfoLeakDetector {
       if (response.ok) {
         const config = await response.json();
 
-        // 패턴 업데이트
+        // 패턴 업데이트 (문자열 → RegExp 변환)
         if (config.patterns) {
-          this.patterns = { ...this.patterns, ...config.patterns };
+          for (const [name, pattern] of Object.entries(config.patterns)) {
+            try {
+              // 문자열 패턴을 RegExp로 변환 (글로벌 플래그 추가)
+              this.patterns[name] = new RegExp(pattern, "gi");
+              console.log(`✅ 패턴 로드: ${name}`);
+            } catch (e) {
+              console.warn(`⚠️ 잘못된 정규식 패턴: ${name}`, e);
+            }
+          }
         }
 
         // 키워드 업데이트
